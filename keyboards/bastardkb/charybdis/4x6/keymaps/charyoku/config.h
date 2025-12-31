@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Charly Delay <charly@codesink.dev> (@0xcharly)
+ * Copyright 2025 Idril Geer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,10 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "../../../../common/common_config.h"
 
 #ifdef VIA_ENABLE
 /* VIA configuration. */
-#    define DYNAMIC_KEYMAP_LAYER_COUNT 8
 #endif // VIA_ENABLE
 
 #ifndef __arm__
@@ -26,10 +26,7 @@
 #    define NO_ACTION_ONESHOT
 #endif // __arm__
 
-#define SPLIT_LAYER_STATE_ENABLE // comm overhead
 #define SPLIT_MODS_ENABLE
-#define SPLIT_LED_STATE_ENABLE
-
 #define CAPS_WORD_INVERT_ON_SHIFT
 
 /* Charybdis-specific features. */
@@ -61,6 +58,6 @@
 #    define EECONFIG_USER_DATA_SIZE 20
 
 // Limit RGB brightness to avoid lags
-#    define RGB_MATRIX_MAXIMUM_BRIGHTNESS 180 // limits maximum brightness of LEDs to 200 out of 255. If not defined maximum brightness is set to 255
+#    define RGB_MATRIX_MAXIMUM_BRIGHTNESS 180 // limits maximum brightness of LEDs to 180 out of 255. If not defined maximum brightness is set to 255
 
 #endif // POINTING_DEVICE_ENABLE

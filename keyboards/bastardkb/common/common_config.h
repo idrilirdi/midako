@@ -1,3 +1,4 @@
+// Common config for charyoku and midako
 /**
  * Copyright 2025 Idril Geer
  *
@@ -16,6 +17,6 @@
  */
 #pragma once
 
-#include "../../../../common/common_config.h"
-
-#define ENCODER_RESOLUTION 4
+#define DYNAMIC_KEYMAP_LAYER_COUNT 8
+#define SPLIT_LAYER_STATE_ENABLE
+#define SPLIT_LED_STATE_ENABLE
