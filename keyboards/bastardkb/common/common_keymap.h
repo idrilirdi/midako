@@ -132,13 +132,13 @@ _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,  XXXXXXX,KC_BRID,XXXXXXX,KC_BRI
 // clang-format off
 #define COMMON_POINTER_ROWS \
 /* ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮ */ \
-        ________________KEYB_CTRL_ROW_L________________,        ________________KEYB_CTRL_ROW_R________________, \
+    ________________KEYB_CTRL_ROW_L________________,  ________________KEYB_CTRL_ROW_R________________, \
 /* ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
-        _________________DEAD_HALF_ROW_________________,        MA_GROW,MA_LMT,MS_BTN3,MS_BTN5,DPI_MOD, KC_TAB, \
+    _________________DEAD_HALF_ROW_________________,  _______,_______,MS_BTN3,MS_BTN5,DPI_MOD, KC_TAB, \
 /* ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
-        ________________HOME_ROW_GACS_L________________,        MA_OFST,MA_TKOF,MA_TOGG,MS_BTN4,S_D_MOD, KC_SPC, \
+    ________________HOME_ROW_GACS_L________________,  _______,_______,_______,MS_BTN4,S_D_MOD, KC_SPC, \
 /* ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
-        _______,XXXXXXX,XXXXXXX,SNP_TOG,DRG_TOG,XXXXXXX,        MS_BTN3, MS_BTN1, MS_BTN2,_______,DRGSCRL,_______ \
+    _______,XXXXXXX,XXXXXXX,SNP_TOG,DRG_TOG,XXXXXXX,   MS_BTN3, MS_BTN1, MS_BTN2,_______,DRGSCRL,_______ \
 /* ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯ */
 // clang-format on
 
@@ -295,12 +295,4 @@ bool caps_word_press_user(uint16_t keycode) {
         default:
             return false; // Deactivate Caps Word.
     }
-}
-
-void keyboard_post_init_user(void) {
-  // Customise these values to desired behaviour
-  debug_enable=true;
-  debug_matrix=true;
-  debug_keyboard=true;
-  debug_mouse=true;
 }
