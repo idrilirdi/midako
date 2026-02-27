@@ -3,5 +3,6 @@
     "build_targets": [
         ["bastardkb/charybdis/4x6", "midako"],
         ["bastardkb/dilemma/4x6_4", "midako"],
+        ["bastardkb/dilemma/4x6_4_procyon", "midako"],
     ]
 }
