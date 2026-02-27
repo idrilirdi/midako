@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "../../../../common/common_keymap.h"
-#include "keycodes.h"
 
 #ifdef ENCODER_MAP_ENABLE
 #    define LENC XXXXXXX
