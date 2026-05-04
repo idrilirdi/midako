@@ -190,23 +190,26 @@ _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,  XXXXXXX,KC_BRID,XXXXXXX,KC_BRI
 /**
  * \brief Symbols layer.
  *
- * Secondary left-hand layer has shifted symbols in the same locations to reduce
- * chording when using mods with shifted symbols. `KC_LPRN` is duplicated next to
- * `KC_RPRN`.
+ * The symbols layer is the biggest deviation from both miryoku and charyoku. We use both halves of the keyboard for it
+ * and it no longer couples to the shifted values of the Numeral rows (As these are still easily accessible by just
+ * pressing shift while in that layer.
  *
- * Editing keys (copy-paste, undo) shared with all other right layers.
- * The `-,.` punctuations on the other side (right) are preserved from the base layer.
+ * The main inspiration comes from the following awesome reddit comment by user ShelZuuz:
+ * https://web.archive.org/web/20260227095613/https://old.reddit.com/r/ErgoMechKeyboards/comments/1cim5s9/miryoku_for_programming/l2adh8g/
+ *     ` ~ # & |    ^ { } [ ]
+ *     ! _ : = $    @ ( ) _ ;
+ *     % ? * + \    / - < > "
  */
 // clang-format off
 #define COMMON_SYMBOLS_ROWS \
 /* ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮ */ \
-    ________________KEYB_CTRL_ROW_L________________,  ________________KEYB_CTRL_ROW_R________________, \
+    ________________KEYB_CTRL_ROW_L________________,          ________________KEYB_CTRL_ROW_R________________, \
 /* ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
-    _______,KC_LCBR,KC_AMPR,KC_ASTR,KC_LPRN,KC_RCBR,  _______,_______, KC_EQL,KC_SLSH,KC_BSLS, KC_TAB, \
+    _______, KC_GRV, KC_TILD, KC_HASH, KC_AMPR, KC_PIPE,      KC_CIRC, KC_LCBR, KC_RCBR, KC_LBRC, KC_RBRC, _______,\
 /* ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
-    _______,KC_COLN, KC_DLR,KC_PERC,KC_CIRC,KC_PLUS,  _______, KC_LSFT,KC_LCTL,KC_LALT,KC_LGUI, KC_SPC, \
+    _______, KC_EXLM, KC_UNDS, KC_COLN, KC_EQL, KC_DLR,       KC_AT,   KC_LBRC, KC_RBRC, KC_UNDS, KC_SCLN, _______,\
 /* ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
-    _______,KC_TILD,KC_EXLM,  KC_AT,KC_HASH,KC_PIPE,  _______,_______,KC_MINS,KC_COMM, KC_DOT,_______ \
+    _______, KC_PERC, KC_QUES, KC_ASTR, KC_PLUS, KC_BSLS,     KC_SLSH, KC_MINS, KC_LABK, KC_RABK, KC_QUOT, _______ \
 /* ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯ */
 // clang-format on
 
@@ -298,9 +301,9 @@ bool caps_word_press_user(uint16_t keycode) {
 }
 
 void keyboard_post_init_user(void) {
-  // Customise these values to desired behaviour
-  debug_enable=true;
-  // debug_matrix=true;
-  // debug_keyboard=true;
-  debug_mouse=true;
+    // Customise these values to desired behaviour
+    debug_enable = true;
+    // debug_matrix=true;
+    // debug_keyboard=true;
+    debug_mouse = true;
 }
