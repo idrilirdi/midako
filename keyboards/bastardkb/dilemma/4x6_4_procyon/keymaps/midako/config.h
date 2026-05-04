@@ -19,3 +19,6 @@
 #include "../../../../common/common_config.h"
 
 #define ENCODER_RESOLUTION 4
+#define LAYER_MAP_REMAPPING
+#define LAYER_MAP_ROWS 5
+#define LAYER_MAP_COLS 6

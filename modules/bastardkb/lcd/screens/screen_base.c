@@ -1,4 +1,5 @@
 #include QMK_KEYBOARD_H
+#include "layer_map.h"
 #include "introspection.h"
 #include "lvgl.h"
 #include <ctype.h>
@@ -12,6 +13,8 @@
 #include "transactions.h"
 #include "dilemma_sync.h"
 
+LV_FONT_DECLARE(jetbrainsmono13);
+
 typedef struct {
     lv_obj_t *obj;
     void (*update_function)(lv_obj_t *, dilemma_status_t current_status, dilemma_status_t prev_status);
@@ -20,32 +23,23 @@ typedef struct {
 dilemma_status_t dilemma_lcd_status_prev = {0};
 dilemma_status_t dilemma_lcd_status      = {0};
 
-static void        update_layer_name(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_rgb_value(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_rgb_bar(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_shift(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_ctrl(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_alt(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_gui(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_snipe(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_scroll(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_snipe_dpi_bar(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_snipe_dpi_number(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_dpi_bar(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_dpi_number(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_mod_xx(lv_obj_t *obj, uint8_t mod_mask, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static void        update_rgb_effect(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
-static const char *rgb_matrix_get_effect_name(void);
-static void        menu_base_go_pomodoro(void);
-static void        menu_base_change_theme(void);
-static void        load_screen_base_menu(void);
-static void        load_screen_base_base(void);
-static void        refresh_screen_base(void);
+static void update_layer_name(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
+static void update_mod_shift(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
+static void update_mod_ctrl(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
+static void update_mod_alt(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
+static void update_mod_gui(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
+static void update_keymap_display(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status);
+static void update_mod_xx(lv_obj_t *obj, uint8_t mod_mask, const dilemma_status_t current_status, const dilemma_status_t prev_status);
+static void menu_base_go_pomodoro(void);
+static void menu_base_change_theme(void);
+static void load_screen_base_menu(void);
+static void load_screen_base_base(void);
+static void refresh_screen_base(void);
 
 static lv_obj_t *ui_screen_base;
 static lv_obj_t *ui_screen_base_menu;
 
-static obj_update_dilemma_lcd_status_t widgets[14];
+static obj_update_dilemma_lcd_status_t widgets[6];
 static obj_update_dilemma_menu_t       menus[3];
 static uint8_t                         screen_index = 0;
 static uint8_t                         menu_index   = 0;
@@ -82,52 +76,21 @@ void init_screen_base(void) {
         ui_create_mod_button(cont, "META", false, MOD_MASK_GUI),
         &update_mod_gui,
     };
-    ui_create_line_separator(cont, 1, 3);
-    widgets[5] = (obj_update_dilemma_lcd_status_t){
-        ui_create_mod_button(cont, "SCROLL", true, 0),
-        &update_mod_scroll,
-    };
-    widgets[6] = (obj_update_dilemma_lcd_status_t){
-        ui_create_mod_button(cont, "SNIPE", false, 0),
-        &update_mod_snipe,
-    };
 
-    // sniping DPI widgets
-    ui_create_secondary_text(cont, "SNIPE DPI", true, 4);
-    widgets[7] = (obj_update_dilemma_lcd_status_t){
-        ui_create_progress_bar(cont, 4),
-        &update_mod_snipe_dpi_bar,
-    };
-    widgets[8] = (obj_update_dilemma_lcd_status_t){
-        ui_create_number_label(cont, 2),
-        &update_mod_snipe_dpi_number,
-    };
-
-    // regular DPI widgets
-    ui_create_secondary_text(cont, "DPI", true, 2);
-    widgets[9] = (obj_update_dilemma_lcd_status_t){
-        ui_create_progress_bar(cont, 6),
-        &update_mod_dpi_bar,
-    };
-    widgets[10] = (obj_update_dilemma_lcd_status_t){
-        ui_create_number_label(cont, 2),
-        &update_mod_dpi_number,
-    };
-
-    // line separator
     ui_create_line_separator(cont, 1, 3);
 
-    // rgb widgets
-    ui_create_secondary_text(cont, "RGB", true, 2);
-    widgets[11] = (obj_update_dilemma_lcd_status_t){
-        ui_create_progress_bar(cont, 6),
-        &update_rgb_bar,
-    };
-    widgets[12] = (obj_update_dilemma_lcd_status_t){
-        ui_create_number_label(cont, 2),
-        &update_rgb_value,
-    };
-    widgets[13] = (obj_update_dilemma_lcd_status_t){ui_create_secondary_text(cont, "effect...", true, 1), &update_rgb_effect};
+    // Create the text label for the Keymap
+    lv_obj_t *keymap_label = lv_label_create(cont);
+
+    lv_obj_set_width(keymap_label, LV_PCT(100)); // Prevents separator bar from shrinking
+    lv_label_set_text(keymap_label, "Loading...");
+
+    ui_styles_t *styles = get_current_ui_styles();
+    lv_obj_add_style(keymap_label, &styles->value_labels, 0);
+    lv_obj_set_style_text_font(keymap_label, &jetbrainsmono13, 0); // Monospace font for perfect grid
+    lv_obj_set_style_text_color(keymap_label, lv_color_hex(0xFFFFFF), 0);
+
+    widgets[5] = (obj_update_dilemma_lcd_status_t){keymap_label, &update_keymap_display};
 
     /* ----- menus ----- */
     menus[0] = (obj_update_dilemma_menu_t){
@@ -161,27 +124,6 @@ static void menu_base_change_theme(void) {
     // if (is_keyboard_left()) {
     update_styles_from_current_theme();
     // }
-}
-
-static const char *rgb_matrix_get_effect_name(void) {
-    // thank you drashna!
-    static char    buf[32]     = {0};
-    static uint8_t last_effect = 0;
-    if (last_effect != rgb_matrix_get_mode()) {
-        last_effect = rgb_matrix_get_mode();
-        snprintf(buf, sizeof(buf), "%s", rgb_matrix_get_mode_name(rgb_matrix_get_mode()));
-        for (uint8_t i = 1; i < sizeof(buf); ++i) {
-            if (buf[i] == 0)
-                break;
-            else if (buf[i] == '_')
-                buf[i] = ' ';
-            else if (buf[i - 1] == ' ')
-                buf[i] = toupper(buf[i]);
-            else if (buf[i - 1] != ' ')
-                buf[i] = tolower(buf[i]);
-        }
-    }
-    return buf;
 }
 
 static void update_layer_name(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
@@ -239,98 +181,111 @@ static void update_mod_gui(lv_obj_t *obj, const dilemma_status_t current_status,
     update_mod_xx(obj, MOD_MASK_GUI, current_status, prev_status);
 }
 
-static void update_rgb_effect(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
-    const bool rgb_change = (current_status.rgb_enabled != prev_status.rgb_enabled);
+// Safely extract readable names without relying on conflicting external modules
+static const char *stringify_keycode(uint16_t kc) {
+    if (kc == KC_NO || kc == 0) return "    "; // 4 blank spaces for gaps
+    if (kc == KC_TRANSPARENT) return "TRNS";
 
-    if (!current_status.rgb_enabled) {
-        if (rgb_change) {
-            lv_label_set_text(obj, "");
+    // Handle Layer Toggles (TG, TO, MO)
+    if ((kc & 0xFF00) == 0x5000) return "TG";
+    if ((kc & 0xFF00) == 0x5100) return "TO";
+    if ((kc & 0xFF00) == 0x5200) return "MO";
+
+    // Strip Mod-Taps (0x2000) and Layer-Taps (0x4000) to get the basic keycode
+    if (kc > 0x00FF) {
+        uint16_t basic_kc = kc & 0xFF;
+        if (basic_kc > 0) kc = basic_kc;
+    }
+
+    // Direct lookup for all standard keys (Matches your common_keymap.h comments)
+    static const char *const basic_keys[] = {"    ", "    ", "    ", "    ", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "ENT", "ESC", "BSPC", "TAB", "SPC", "MINS", "EQL", "LBRC", "RBRC", "BSLS", "NUHS", "SCLN", "QUOT", "GRV", "COMM", "DOT", "SLSH", "CAPS", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "PSCR", "SCRL", "PAUS", "INS", "HOME", "PGUP", "DEL", "END", "PGDN", "RGHT", "LEFT", "DOWN", "UP", "NUM", "PSLS", "PAST", "PMNS", "PPLS", "PENT", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P0", "PDOT", "NUBS", "APP"};
+
+    if (kc < sizeof(basic_keys) / sizeof(basic_keys[0])) return basic_keys[kc];
+
+    // Explicit overrides for modifiers and media
+    switch (kc) {
+        case KC_LCTL:
+            return "LCTL";
+        case KC_LSFT:
+            return "LSFT";
+        case KC_LALT:
+            return "LALT";
+        case KC_LGUI:
+            return "LGUI";
+        case KC_RCTL:
+            return "RCTL";
+        case KC_RSFT:
+            return "RSFT";
+        case KC_RALT:
+            return "RALT";
+        case KC_RGUI:
+            return "RGUI";
+        case KC_MPLY:
+            return "PLAY";
+        case KC_MSTP:
+            return "STOP";
+        case KC_MPRV:
+            return "PREV";
+        case KC_MNXT:
+            return "NEXT";
+        case KC_MUTE:
+            return "MUTE";
+        case KC_VOLU:
+            return "VOLU";
+        case KC_VOLD:
+            return "VOLD";
+    }
+
+    return " ???";
+}
+
+// Declare Drashna's internal function so we can force it to run on the slave half
+extern void populate_layer_map(void);
+
+static void update_keymap_display(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
+    bool is_initial_load = (strcmp(lv_label_get_text(obj), "Loading...") == 0);
+
+    // If the master synced a layer change over TRRS, or we just booted
+    if (current_status.layer != prev_status.layer || is_initial_load) {
+        if (!is_keyboard_master()) {
+            // FIX: Drashna's module refuses to run this on the slave side.
+            // We bypass his check and force it to populate the array right now!
+            populate_layer_map();
+            set_layer_map_has_updated(true);
+        } else {
+            // On master, just mark it dirty and let the background task handle it normally
+            set_layer_map_dirty();
         }
-    } else {
-        if ((rgb_change) || (current_status.rgb_effect_mode != prev_status.rgb_effect_mode)) {
-            const char *effect_name = rgb_matrix_get_effect_name();
-            lv_label_set_text(obj, effect_name);
+    }
+
+    // Only draw if the map was just populated
+    if (get_layer_map_has_updated() || is_initial_load) {
+        // Safety abort: wait for background task to fill the array if on master
+        if (layer_map[0][0] == 0 && layer_map[0][1] == 0 && is_keyboard_master()) {
+            return;
         }
-    }
-}
 
-static void update_rgb_value(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
-    const bool rgb_change = (current_status.rgb_enabled != prev_status.rgb_enabled);
+        char km_str[512] = "";
 
-    if (!current_status.rgb_enabled) {
-        if (rgb_change) {
-            lv_label_set_text(obj, "Off");
+        for (int row = 0; row < LAYER_MAP_ROWS; row++) {
+            for (int col = 0; col < LAYER_MAP_COLS; col++) {
+                uint16_t kc = layer_map[row][col];
+
+                char key_str[10];
+
+                // SPACING FIX: Removed the trailing space.
+                // "%-4.4s" means every column will take EXACTLY 4 characters of space.
+                snprintf(key_str, sizeof(key_str), "%-4.4s", stringify_keycode(kc));
+
+                strcat(km_str, key_str);
+            }
+            strcat(km_str, "\n");
         }
-    } else {
-        if ((rgb_change) || (current_status.rgb_val != prev_status.rgb_val)) {
-            char rgbval[50];
-            sprintf(rgbval, "%u", current_status.rgb_val);
-            lv_label_set_text(obj, rgbval);
-        }
-    }
-}
 
-static void update_rgb_bar(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
-    const bool rgb_change = (current_status.rgb_enabled != prev_status.rgb_enabled);
-    if (!current_status.rgb_enabled) {
-        if (rgb_change) {
-            lv_bar_set_value(obj, 0, LV_ANIM_OFF);
-        }
-    } else {
-        if ((rgb_change) || (current_status.rgb_val != prev_status.rgb_val)) {
-            float rel = (float)(current_status.rgb_val) * 100 / 156;
-            lv_bar_set_value(obj, (uint16_t)rel, LV_ANIM_OFF);
-        }
-    }
-}
+        lv_label_set_text(obj, km_str);
 
-static void update_mod_scroll(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
-    if (current_status.scrolling != prev_status.scrolling) {
-        uint32_t event = current_status.scrolling ? LV_EVENT_PRESSED : LV_EVENT_RELEASED;
-        lv_event_send(obj, event, NULL);
-    }
-}
-
-static void update_mod_snipe(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
-    if (current_status.sniping != prev_status.sniping) {
-        uint32_t event = current_status.sniping ? LV_EVENT_PRESSED : LV_EVENT_RELEASED;
-        lv_event_send(obj, event, NULL);
-    }
-}
-
-// TODO dynamically get max DPI, instead of using hardcoded values
-static void update_mod_snipe_dpi_number(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
-    if (current_status.s_dpi != prev_status.s_dpi) {
-        char c_s_dpi[50];
-        sprintf(c_s_dpi, "%u", (uint16_t)current_status.s_dpi);
-        lv_label_set_text(obj, c_s_dpi);
-    }
-}
-
-// TODO dynamically get max DPI, instead of using hardcoded values
-static void update_mod_snipe_dpi_bar(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
-    if (current_status.s_dpi != prev_status.s_dpi) {
-        static const uint16_t rel_max_s_dpi = 100 * 4;
-        const float           rel           = (float)((current_status.s_dpi + 100 - 200)) * 100 / rel_max_s_dpi;
-        lv_bar_set_value(obj, (uint16_t)rel, LV_ANIM_OFF);
-    }
-}
-
-// TODO dynamically get max DPI, instead of using hardcoded values
-static void update_mod_dpi_number(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
-    if (current_status.dpi != prev_status.dpi) {
-        char c_dpi[50];
-        sprintf(c_dpi, "%u", (uint16_t)current_status.dpi);
-        lv_label_set_text(obj, c_dpi);
-    }
-}
-
-// TODO dynamically get max DPI, instead of using hardcoded values
-static void update_mod_dpi_bar(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
-    if (current_status.dpi != prev_status.dpi) {
-        static const uint16_t rel_max_dpi = 200 * 16;
-        const float           rel         = (float)((current_status.dpi + 200 - 400)) * 100 / rel_max_dpi;
-        lv_bar_set_value(obj, (uint16_t)rel, LV_ANIM_OFF);
+        // Reset the flag so we don't waste CPU cycles drawing the exact same grid again
+        set_layer_map_has_updated(false);
     }
 }
 

@@ -114,3 +114,16 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 };
 // clang-format on
 #endif // ENCODER_MAP_ENABLE
+
+#ifdef COMMUNITY_MODULE_LAYER_MAP_ENABLE
+#    include "layer_map.h"
+
+// Maps the visual 5x6 grid on the LCD to the { col, row } of the physical matrix
+keypos_t layer_remap[LAYER_MAP_ROWS][LAYER_MAP_COLS] = {
+    {{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}},        // Top row
+    {{0, 1}, {1, 1}, {2, 1}, {3, 1}, {4, 1}, {5, 1}},        // Upper middle
+    {{0, 2}, {1, 2}, {2, 2}, {3, 2}, {4, 2}, {5, 2}},        // Lower middle
+    {{0, 3}, {1, 3}, {2, 3}, {3, 3}, {4, 3}, {5, 3}},        // Bottom row
+    {{255, 255}, {255, 255}, {2, 4}, {3, 4}, {4, 4}, {5, 4}} // Thumbs (Adjust {col, row} if your thumbs are wired differently)
+};
+#endif // COMMUNITY_MODULE_LAYER_MAP_ENABLE
