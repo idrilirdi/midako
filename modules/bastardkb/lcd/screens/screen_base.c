@@ -245,38 +245,42 @@ extern void populate_layer_map(void);
 static void update_keymap_display(lv_obj_t *obj, const dilemma_status_t current_status, const dilemma_status_t prev_status) {
     bool is_initial_load = (strcmp(lv_label_get_text(obj), "Loading...") == 0);
 
-    // If the master synced a layer change over TRRS, or we just booted
-    if (current_status.layer != prev_status.layer || is_initial_load) {
-        if (!is_keyboard_master()) {
-            // FIX: Drashna's module refuses to run this on the slave side.
-            // We bypass his check and force it to populate the array right now!
-            populate_layer_map();
-            set_layer_map_has_updated(true);
-        } else {
-            // On master, just mark it dirty and let the background task handle it normally
-            set_layer_map_dirty();
-        }
+    // Track the last layer we actually populated for, using layer_state directly.
+    // Avoiding dilemma_status.layer here is intentional: the custom RPC that updates
+    // dilemma_status arrives in a separate USB transaction from QMK's native
+    // SPLIT_LAYER_STATE_ENABLE sync.  If the RPC fires first, populate_layer_map()
+    // would read the *old* layer_state and cache stale keycodes for the new layer.
+    // Using layer_state ensures we only populate after it is already current.
+    static uint8_t last_populated_layer = 0xFF; // 0xFF = sentinel (never populated)
+    uint8_t        current_layer        = get_highest_layer(layer_state);
+
+    if (current_layer != last_populated_layer || is_initial_load) {
+        // layer_state is up-to-date here on both halves:
+        // - master: always local
+        // - slave:  QMK's native split sync has already applied the new state before
+        //           this housekeeping task runs, so we read the correct layer
+        populate_layer_map();
+        set_layer_map_has_updated(true);
+        last_populated_layer = current_layer;
     }
 
     // Only draw if the map was just populated
     if (get_layer_map_has_updated() || is_initial_load) {
-        // Safety abort: wait for background task to fill the array if on master
-        if (layer_map[0][0] == 0 && layer_map[0][1] == 0 && is_keyboard_master()) {
-            return;
-        }
+        char km_str[256] = "";
 
-        char km_str[512] = "";
+        // Each half renders only its own LAYER_MAP_ROWS rows from the full matrix.
+        // The physical matrix stores left-half rows first (0 … LAYER_MAP_ROWS-1) then
+        // right-half rows (LAYER_MAP_ROWS … 2*LAYER_MAP_ROWS-1), so we offset by
+        // LAYER_MAP_ROWS when we are the right half.
+        int row_offset = is_keyboard_left() ? 0 : LAYER_MAP_ROWS;
 
         for (int row = 0; row < LAYER_MAP_ROWS; row++) {
             for (int col = 0; col < LAYER_MAP_COLS; col++) {
-                uint16_t kc = layer_map[row][col];
+                uint16_t kc = layer_map[row_offset + row][col];
 
                 char key_str[10];
-
-                // SPACING FIX: Removed the trailing space.
-                // "%-4.4s" means every column will take EXACTLY 4 characters of space.
+                // "%-4.4s" — every cell takes exactly 4 characters, left-aligned.
                 snprintf(key_str, sizeof(key_str), "%-4.4s", stringify_keycode(kc));
-
                 strcat(km_str, key_str);
             }
             strcat(km_str, "\n");
@@ -284,7 +288,7 @@ static void update_keymap_display(lv_obj_t *obj, const dilemma_status_t current_
 
         lv_label_set_text(obj, km_str);
 
-        // Reset the flag so we don't waste CPU cycles drawing the exact same grid again
+        // Clear flag so we don't redraw the same content next cycle
         set_layer_map_has_updated(false);
     }
 }
@@ -326,11 +330,11 @@ void refresh_screen_base(void) {
         }
     }
 
-    if (is_keyboard_left()) {
-        for (int i = 0; i < sizeof(widgets) / sizeof(obj_update_dilemma_lcd_status_t); i++) {
-            lv_obj_t *obj = widgets[i].obj;
-            if (obj && widgets[i].update_function) widgets[i].update_function(obj, current_status, prev_status);
-        }
+    // Both halves have an LCD and run this task independently.  Each half renders its
+    // own widgets — including the keymap slice for that side (see update_keymap_display).
+    for (int i = 0; i < sizeof(widgets) / sizeof(obj_update_dilemma_lcd_status_t); i++) {
+        lv_obj_t *obj = widgets[i].obj;
+        if (obj && widgets[i].update_function) widgets[i].update_function(obj, current_status, prev_status);
     }
 
     last_layer = current_layer;
