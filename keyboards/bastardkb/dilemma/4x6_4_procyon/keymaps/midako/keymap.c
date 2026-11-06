@@ -16,6 +16,8 @@
  */
 #include "../../../../common/common_keymap.h"
 
+#define MENU_X TG(LAYER_MENU)
+
 #ifdef ENCODER_MAP_ENABLE
 #    define LENC XXXXXXX
 #    define RENC XXXXXXX
@@ -89,6 +91,20 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                 LENC, KC_LCTL, KC_SPC,KC_TAB,          DEL_FUN, ENT_SYM, BSP_NUM, RENC
         //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
     ),
+    // LCD menu: up/down to pick an entry, leave the layer to run it.
+    [LAYER_MENU] = LAYOUT(
+        // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
+             MENU_X,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  MENU_X,
+        // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+            XXXXXXX,  XXXXXXX, XXXXXXX, LCDPR,   XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, LCDPR,   XXXXXXX, XXXXXXX, XXXXXXX,
+        // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+            XXXXXXX,  XXXXXXX, XXXXXXX, LCDNE,   XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, LCDNE,   XXXXXXX, XXXXXXX, XXXXXXX,
+        // ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤
+            XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,    XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+        // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
+                                LENC,  MENU_X,  MENU_X,  XXXXXXX,      XXXXXXX,  MENU_X,  MENU_X, RENC
+        //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
+    ),
 };
 // clang-format on
 
@@ -129,6 +145,7 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     [LAYER_FUNCTION]    = {ENCODER_CCW_CW(MS_WHLU, MS_WHLD),                            ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
     [LAYER_MEDIA]       = {ENCODER_CCW_CW(KC_MEDIA_PREV_TRACK, KC_MEDIA_NEXT_TRACK),    ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
     [LAYER_GAMING]      = {ENCODER_CCW_CW(MS_WHLU, MS_WHLD),                            ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
+    [LAYER_MENU]        = {ENCODER_CCW_CW(LCDPR, LCDNE),                                ENCODER_CCW_CW(LCDPR, LCDNE)},
 };
 // clang-format on
 #endif // ENCODER_MAP_ENABLE
@@ -136,12 +153,62 @@ const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
 #ifdef COMMUNITY_MODULE_LAYER_MAP_ENABLE
 #    include "layer_map.h"
 
-// Maps the visual 5x6 grid on the LCD to the { col, row } of the physical matrix
+// Maps the LCD grid to the physical matrix, as { col, row }. Rows 0-4: left half,
+// rows 5-9: right half, both left to right as seen from above. The right half's
+// matrix columns run outer to inner, hence 5-c. Thumb rows follow the LAYOUT order
+// (encoder, then three thumbs); { 255, 255 } slots are empty and hidden on the LCD.
+// clang-format off
 keypos_t layer_remap[LAYER_MAP_ROWS][LAYER_MAP_COLS] = {
-    {{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}},        // Top row
-    {{0, 1}, {1, 1}, {2, 1}, {3, 1}, {4, 1}, {5, 1}},        // Upper middle
-    {{0, 2}, {1, 2}, {2, 2}, {3, 2}, {4, 2}, {5, 2}},        // Lower middle
-    {{0, 3}, {1, 3}, {2, 3}, {3, 3}, {4, 3}, {5, 3}},        // Bottom row
-    {{255, 255}, {255, 255}, {2, 4}, {3, 4}, {4, 4}, {5, 4}} // Thumbs (Adjust {col, row} if your thumbs are wired differently)
+    {{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}},
+    {{0, 1}, {1, 1}, {2, 1}, {3, 1}, {4, 1}, {5, 1}},
+    {{0, 2}, {1, 2}, {2, 2}, {3, 2}, {4, 2}, {5, 2}},
+    {{0, 3}, {1, 3}, {2, 3}, {3, 3}, {4, 3}, {5, 3}},
+    {{255, 255}, {255, 255}, {3, 4}, {1, 4}, {2, 4}, {4, 4}},
+    {{5, 5}, {4, 5}, {3, 5}, {2, 5}, {1, 5}, {0, 5}},
+    {{5, 6}, {4, 6}, {3, 6}, {2, 6}, {1, 6}, {0, 6}},
+    {{5, 7}, {4, 7}, {3, 7}, {2, 7}, {1, 7}, {0, 7}},
+    {{5, 8}, {4, 8}, {3, 8}, {2, 8}, {1, 8}, {0, 8}},
+    {{4, 9}, {2, 9}, {1, 9}, {3, 9}, {255, 255}, {255, 255}},
 };
+// clang-format on
 #endif // COMMUNITY_MODULE_LAYER_MAP_ENABLE
+
+#ifdef COMMUNITY_MODULE_LCD_ENABLE
+const char *keycode_label_user(uint16_t keycode) {
+    switch (keycode) {
+        case SYM_ARW:
+            return "->";
+        case BASE_TOGG:
+            return "QWE";
+        default:
+            return NULL;
+    }
+}
+
+const char *lcd_layer_name(uint8_t layer) {
+    switch (layer) {
+        case LAYER_BASE:
+            return "BASE";
+        case LAYER_QWERTY:
+            return "QWERTY";
+        case LAYER_NAVIGATION:
+            return "NAV";
+        case LAYER_POINTER:
+            return "POINTER";
+        case LAYER_NUMERAL:
+            return "NUMERAL";
+        case LAYER_SYMBOLS:
+            return "SYMBOLS";
+        case LAYER_FUNCTION:
+            return "FUNCTION";
+        case LAYER_MEDIA:
+            return "MEDIA";
+        case LAYER_GAMING:
+            return "GAMING";
+        case LAYER_MENU:
+            return "MENU";
+        default:
+            return "?";
+    }
+}
+#endif // COMMUNITY_MODULE_LCD_ENABLE

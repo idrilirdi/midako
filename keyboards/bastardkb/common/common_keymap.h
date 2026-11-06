@@ -315,10 +315,17 @@ const uint16_t PROGMEM combo_layer_lock_fun[] = {DEL_FUN, KC_CAPS, COMBO_END};
 const uint16_t PROGMEM combo_layer_lock_num[] = {BSP_NUM, KC_CAPS, COMBO_END};
 const uint16_t PROGMEM combo_layer_lock_sym[] = {ENT_SYM, KC_CAPS, COMBO_END};
 const uint16_t PROGMEM combo_base_toggle[]    = {KC_APP, KC_PSCR, COMBO_END};
+#    ifdef LAYER_MENU
+// Only keymaps with an LCD menu layer (Dilemma midako) define LAYER_MENU.
+const uint16_t PROGMEM combo_lcd_menu[] = {CW_TOGG, TGL_GM, COMBO_END};
+#    endif
 
 combo_t key_combos[] = {
     COMBO(combo_layer_lock_med, TG(LAYER_MEDIA)), COMBO(combo_layer_lock_nav, TG(LAYER_NAVIGATION)), COMBO(combo_layer_lock_ptr, TG(LAYER_POINTER)), COMBO(combo_layer_lock_fun, TG(LAYER_FUNCTION)), COMBO(combo_layer_lock_num, TG(LAYER_NUMERAL)), COMBO(combo_layer_lock_sym, TG(LAYER_SYMBOLS)),
     COMBO(combo_base_toggle, BASE_TOGG),
+#    ifdef LAYER_MENU
+    COMBO(combo_lcd_menu, TG(LAYER_MENU)),
+#    endif
 };
 #endif // COMBO_ENABLE
 
