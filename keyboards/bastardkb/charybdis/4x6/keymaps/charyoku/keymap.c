@@ -68,8 +68,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         // ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮
                                                             COMMON_POINTER_ROWS,
         // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
-                             KC_ESC,KC_BTN1,_______,                                   KC_ENT,KC_BSPC, \
-                                    KC_BTN2,KC_BTN3,                                   KC_DEL
+                             KC_ESC,MS_BTN1,_______,                                   KC_ENT,KC_BSPC, \
+                                    MS_BTN2,MS_BTN3,                                   KC_DEL
   //                            ╰───────────────────────────╯ ╰──────────────────╯
     ),
     [LAYER_NAVIGATION] = LAYOUT_wrapper(
