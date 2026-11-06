@@ -275,6 +275,23 @@ combo_t key_combos[] = {
 };
 #endif // COMBO_ENABLE
 
+/**
+ * Layer-tap thumbs whose tap is costly by accident (Enter, Backspace, Delete): as soon
+ * as another key is pressed while they are held, they act as the layer, however fast.
+ * A tap only fires when the key is pressed and released alone. Space/NAV is left out:
+ * space overlaps the next letter all the time in normal typing.
+ */
+bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case ENT_SYM:
+        case BSP_NUM:
+        case DEL_FUN:
+            return true;
+        default:
+            return false;
+    }
+}
+
 // Caps word function
 bool caps_word_press_user(uint16_t keycode) {
     switch (keycode) {
