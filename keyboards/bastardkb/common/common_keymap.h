@@ -57,6 +57,8 @@ enum midako_keymap_layers {
 enum midako_keycodes {
     // Switch the default (base) layer between Colemak-DH and QWERTY, saved in EEPROM.
     BASE_TOGG = SAFE_RANGE,
+    // Symbols layer thumb: type "->" in one press.
+    SYM_ARW,
 };
 
 /** Convenience row shorthands. */
@@ -225,22 +227,34 @@ _______,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,XXXXXXX,  XXXXXXX,KC_BRID,XXXXXXX,KC_BRI
  * and it no longer couples to the shifted values of the Numeral rows (As these are still easily accessible by just
  * pressing shift while in that layer.
  *
- * The main inspiration comes from the following awesome reddit comment by user ShelZuuz:
+ * Started from the reddit comment by user ShelZuuz:
  * https://web.archive.org/web/20260227095613/https://old.reddit.com/r/ErgoMechKeyboards/comments/1cim5s9/miryoku_for_programming/l2adh8g/
- *     ` ~ # & |    ^ { } [ ]
- *     ! _ : = $    @ ( ) _ ;
- *     % ? * + \    / - < > "
+ * and reworked for C++, Python, bash (and Catalan via the compose key), around rules
+ * that are easy to remember:
+ *
+ *     @ * & ( <    > ) | % ^
+ *     _ $ = [ +    - ] : # ;
+ *     ~ ! ` { \    / } ' ? .
+ *     thumbs: -> SPC "
+ *
+ * - Every key mirrors its partner on the other hand: ( ) [ ] { } < >, & |, * %, + -,
+ *   \ /, ` ' (grave/acute, compose accents), ! ?, = :, $ #, @ ^.
+ * - Brackets on the index fingers, open left / close right: ( ) top, [ ] home, { } bottom.
+ * - Most used symbols around the index and middle fingers.
+ * - Ties are broken towards NUM + shift, so ( $ ! ~ + \ sit where shift + NUM puts them.
+ * - The pinkies hold the rest: _ and ~ left, ; and . right (QWERTY spots).
+ * - Thumbs: "->" in one press, space, and " (strings, all languages).
  */
 // clang-format off
 #define COMMON_SYMBOLS_ROWS \
 /* ╭──────────────────────────────────────────────────────╮ ╭──────────────────────────────────────────────────────╮ */ \
     ________________KEYB_CTRL_ROW_L________________,          ________________KEYB_CTRL_ROW_R________________, \
 /* ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
-    _______, KC_GRV, KC_TILD, KC_HASH, KC_AMPR, KC_PIPE,      KC_CIRC, KC_LCBR, KC_RCBR, KC_LBRC, KC_RBRC, _______,\
+    _______, KC_AT,   KC_ASTR, KC_AMPR, KC_LPRN, KC_LABK,     KC_RABK, KC_RPRN, KC_PIPE, KC_PERC, KC_CIRC, _______,\
 /* ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
-    _______, KC_EXLM, KC_UNDS, KC_COLN, KC_EQL, KC_DLR,       KC_AT,   KC_LBRC, KC_RBRC, KC_UNDS, KC_SCLN, _______,\
+    _______, KC_UNDS, KC_DLR,  KC_EQL,  KC_LBRC, KC_PLUS,     KC_MINS, KC_RBRC, KC_COLN, KC_HASH, KC_SCLN, _______,\
 /* ├──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
-    _______, KC_PERC, KC_QUES, KC_ASTR, KC_PLUS, KC_BSLS,     KC_SLSH, KC_MINS, KC_LABK, KC_RABK, KC_QUOT, _______ \
+    _______, KC_TILD, KC_EXLM, KC_GRV,  KC_LCBR, KC_BSLS,     KC_SLSH, KC_RCBR, KC_QUOT, KC_QUES, KC_DOT,  _______ \
 /* ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯ */
 // clang-format on
 
@@ -315,6 +329,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
                 bool qwerty = get_highest_layer(default_layer_state) == LAYER_QWERTY;
                 set_single_persistent_default_layer(qwerty ? LAYER_BASE : LAYER_QWERTY);
             }
+            return false;
+        case SYM_ARW:
+            if (record->event.pressed) SEND_STRING("->");
             return false;
     }
     return true;
