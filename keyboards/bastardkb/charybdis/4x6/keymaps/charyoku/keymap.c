@@ -48,6 +48,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                             ALT_SCL,CTL_EQL,            DEL_FUN
         //                            ╰───────────────────────────╯ ╰──────────────────╯
       )),
+    [LAYER_QWERTY] = LAYOUT_wrapper(HOME_ROW_MOD_GACS(
+        // ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+                                                            COMMON_QWERTY_ROWS,
+        // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
+                                        ESC_MED,SPC_NAV,TAB_PTR,            ENT_SYM,BSP_NUM,
+                                            ALT_SCL,CTL_EQL,            DEL_FUN
+        //                            ╰───────────────────────────╯ ╰──────────────────╯
+      )),
     [LAYER_FUNCTION] = LAYOUT_wrapper(
         // ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
                                                             COMMON_FUNCTION_ROWS,
@@ -310,6 +318,9 @@ void rgb_matrix_colorify_led(uint8_t led, uint8_t mods, bool caps_lock, bool cap
             case LAYER_GAMING:
                 set_color(RGB_GREEN);
                 break;
+            case LAYER_QWERTY:
+                qwerty_led_color(led);
+                return;
             default:
                 break;
         }

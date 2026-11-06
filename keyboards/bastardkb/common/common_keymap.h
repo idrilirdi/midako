@@ -20,6 +20,9 @@
 
 enum midako_keymap_layers {
     LAYER_BASE = 0,
+    // Alternative base layer. It must sit right above LAYER_BASE: when it is the
+    // default layer, every other layer still has to be above it to override it.
+    LAYER_QWERTY,
     LAYER_NAVIGATION,
     LAYER_POINTER,
     LAYER_NUMERAL,
@@ -46,6 +49,15 @@ enum midako_keymap_layers {
 #define BSP_NUM LT(LAYER_NUMERAL, KC_BSPC)
 #define ENT_SYM LT(LAYER_SYMBOLS, KC_ENT)
 #define TGL_GM TG(LAYER_GAMING)
+// QWERTY keeps the comma/dot layer-taps on the same fingers as Colemak-DH
+// (ring and pinky), so they land on '.' and '/' there.
+#define QW_PTR LT(LAYER_POINTER, KC_DOT)
+#define QW_NAV LT(LAYER_NAVIGATION, KC_SLSH)
+
+enum midako_keycodes {
+    // Switch the default (base) layer between Colemak-DH and QWERTY, saved in EEPROM.
+    BASE_TOGG = SAFE_RANGE,
+};
 
 /** Convenience row shorthands. */
 #define _________________DEAD_HALF_ROW_________________ XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
@@ -69,6 +81,25 @@ enum midako_keymap_layers {
     KC_PSCR,  KC_A,    KC_R,    KC_S,    KC_T,    KC_G,        KC_M,    KC_N,    KC_E,    KC_I,   KC_O,    KC_SCLN, \
 /* ├────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
     CW_TOGG,  KC_Z,    KC_X,    KC_C,    KC_D,    KC_V,        KC_K,    KC_H,    KC_MINS, LA2_PTR,LA2_NAV, TGL_GM
+/* ╰────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯ */
+// clang-format on
+
+/**
+ * \brief QWERTY alternative base layer.
+ *
+ * Same outer columns, top row and thumbs as COMMON_BASE_ROWS; only the alphas move.
+ * Toggled with the APP + PSCR combo (left outer column), see BASE_TOGG.
+ */
+// clang-format off
+#define COMMON_QWERTY_ROWS \
+/* ╭────────────────────────────────────────────────────╮ ╭───────────────────────────────────────────────────────╮ */ \
+    KC_F11,   KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,       KC_F6,   KC_F7,   KC_F8,   KC_F9,  KC_F10, LCK_SCRN, \
+/* ├────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
+    KC_APP,   KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,        KC_Y,    KC_U,    KC_I,    KC_O,   KC_P,    KC_MINS, \
+/* ├────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
+    KC_PSCR,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,        KC_H,    KC_J,    KC_K,    KC_L,   KC_SCLN, KC_QUOT, \
+/* ├────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────┤ */ \
+    CW_TOGG,  KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,        KC_N,    KC_M,    KC_COMM, QW_PTR, QW_NAV,  TGL_GM
 /* ╰────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯ */
 // clang-format on
 
@@ -269,11 +300,25 @@ const uint16_t PROGMEM combo_layer_lock_ptr[] = {TAB_PTR, CW_TOGG, COMBO_END};
 const uint16_t PROGMEM combo_layer_lock_fun[] = {DEL_FUN, KC_CAPS, COMBO_END};
 const uint16_t PROGMEM combo_layer_lock_num[] = {BSP_NUM, KC_CAPS, COMBO_END};
 const uint16_t PROGMEM combo_layer_lock_sym[] = {ENT_SYM, KC_CAPS, COMBO_END};
+const uint16_t PROGMEM combo_base_toggle[]    = {KC_APP, KC_PSCR, COMBO_END};
 
 combo_t key_combos[] = {
     COMBO(combo_layer_lock_med, TG(LAYER_MEDIA)), COMBO(combo_layer_lock_nav, TG(LAYER_NAVIGATION)), COMBO(combo_layer_lock_ptr, TG(LAYER_POINTER)), COMBO(combo_layer_lock_fun, TG(LAYER_FUNCTION)), COMBO(combo_layer_lock_num, TG(LAYER_NUMERAL)), COMBO(combo_layer_lock_sym, TG(LAYER_SYMBOLS)),
+    COMBO(combo_base_toggle, BASE_TOGG),
 };
 #endif // COMBO_ENABLE
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case BASE_TOGG:
+            if (record->event.pressed) {
+                bool qwerty = get_highest_layer(default_layer_state) == LAYER_QWERTY;
+                set_single_persistent_default_layer(qwerty ? LAYER_BASE : LAYER_QWERTY);
+            }
+            return false;
+    }
+    return true;
+}
 
 /**
  * Layer-tap thumbs whose tap is costly by accident (Enter, Backspace, Delete): as soon
@@ -291,6 +336,36 @@ bool get_hold_on_other_key_press(uint16_t keycode, keyrecord_t *record) {
             return false;
     }
 }
+
+#ifdef RGB_MATRIX_ENABLE
+/**
+ * QWERTY indicator: while QWERTY is the default layer, LEDs are blue and the keys
+ * of the combo that switches back to Colemak-DH (APP + PSCR) are green.
+ * The combo keys are found by keycode, so this works on any matrix/LED layout.
+ */
+static inline bool is_qwerty_on(void) {
+    return get_highest_layer(default_layer_state) == LAYER_QWERTY;
+}
+
+static bool is_base_toggle_led(uint8_t led) {
+    for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
+        for (uint8_t col = 0; col < MATRIX_COLS; col++) {
+            if (g_led_config.matrix_co[row][col] != led) continue;
+            uint16_t kc = keymap_key_to_keycode(LAYER_QWERTY, (keypos_t){.row = row, .col = col});
+            return kc == KC_APP || kc == KC_PSCR;
+        }
+    }
+    return false;
+}
+
+static void qwerty_led_color(uint8_t led) {
+    if (is_base_toggle_led(led)) {
+        rgb_matrix_set_color(led, RGB_GREEN);
+    } else {
+        rgb_matrix_set_color(led, RGB_BLUE);
+    }
+}
+#endif // RGB_MATRIX_ENABLE
 
 // Caps word function
 bool caps_word_press_user(uint16_t keycode) {

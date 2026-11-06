@@ -33,6 +33,13 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                 LENC, ESC_MED, SPC_NAV, TAB_PTR,       DEL_FUN, ENT_SYM, BSP_NUM, RENC
         //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
       )),
+    [LAYER_QWERTY] = LAYOUT_wrapper(HOME_ROW_MOD_GACS(
+        // ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+                                                            COMMON_QWERTY_ROWS,
+        // ╰──────────────────────────────────────────────────────┤ ├──────────────────────────────────────────────────────╯
+                                LENC, ESC_MED, SPC_NAV, TAB_PTR,       DEL_FUN, ENT_SYM, BSP_NUM, RENC
+        //                    ╰───────────────────────────────────╯ ╰───────────────────────────────────╯
+      )),
     [LAYER_FUNCTION] = LAYOUT_wrapper(
         // ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
                                                             COMMON_FUNCTION_ROWS,
@@ -98,12 +105,23 @@ layer_state_t layer_state_set_user(layer_state_t state) {
 // Forward-declare this helper function since it is defined in
 // rgb_matrix.c.
 void rgb_matrix_update_pwm_buffers(void);
+
+// QWERTY indicator on the base layer only: dilemma.c paints momentary layers after this.
+bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
+    if (is_qwerty_on() && get_highest_layer(layer_state) == 0) {
+        for (uint8_t led = led_min; led < led_max; led++) {
+            qwerty_led_color(led);
+        }
+    }
+    return true;
+}
 #endif // RGB_MATRIX_ENABLE
 
 #ifdef ENCODER_MAP_ENABLE
 // clang-format off
 const uint16_t PROGMEM encoder_map[][NUM_ENCODERS][NUM_DIRECTIONS] = {
     [LAYER_BASE]        = {ENCODER_CCW_CW(MS_WHLU, MS_WHLD),                            ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
+    [LAYER_QWERTY]      = {ENCODER_CCW_CW(MS_WHLU, MS_WHLD),                            ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
     [LAYER_NAVIGATION]  = {ENCODER_CCW_CW(MS_WHLU, MS_WHLD),                            ENCODER_CCW_CW(KC_UNDO,KC_AGAIN)},
     [LAYER_POINTER]     = {ENCODER_CCW_CW(RM_HUED, RM_HUEU),                            ENCODER_CCW_CW(RM_SATD, RM_SATU)},
     [LAYER_NUMERAL]     = {ENCODER_CCW_CW(MS_WHLU, MS_WHLD),                            ENCODER_CCW_CW(KC_VOLD, KC_VOLU)},
