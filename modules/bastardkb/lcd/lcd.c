@@ -50,6 +50,51 @@ lcd_module_t* lcd_modules[] = { &lcd_module_base, &lcd_module_pomodoro };
 
 static uint8_t selected_module = MODULE_BASE;
 
+/*
+ * Keep scanning keys while the screen is redrawn.
+ *
+ * LVGL redraws run inside the main loop and can take a few hundred ms on a full
+ * screen. On the slave half nothing else scans its keys meanwhile, so a key pressed
+ * and released during a redraw is never seen (dropped spaces). The QP/LVGL bridge
+ * renders in chunks of 1/10 screen and flushes each one; we scan the matrix after every
+ * flush, so the slave publishes key states to the master at least once per chunk.
+ *
+ * Only on the slave: on the master a scan alone does not process key events, and
+ * running the full keyboard task from inside LVGL is not reentrant-safe.
+ */
+static void (*lvgl_flush_orig)(lv_disp_drv_t *, const lv_area_t *, lv_color_t *) = NULL;
+
+static uint32_t scan_gap_window = 0, scan_gap_peak = 0;
+
+void lcd_note_key_scan(void) {
+    static uint32_t last = 0;
+    uint32_t        now  = timer_read32();
+    if (last && now > 5000) { // ignore the boot-time first full draw
+        uint32_t gap = now - last;
+        if (gap > scan_gap_window) scan_gap_window = gap;
+        if (gap > scan_gap_peak) scan_gap_peak = gap;
+    }
+    last = now;
+}
+
+uint32_t lcd_scan_gap_take_window(void) {
+    uint32_t gap    = scan_gap_window;
+    scan_gap_window = 0;
+    return gap;
+}
+
+uint32_t lcd_scan_gap_peak(void) {
+    return scan_gap_peak;
+}
+
+static void lcd_flush_and_scan(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p) {
+    lvgl_flush_orig(drv, area, color_p);
+    if (!is_keyboard_master()) {
+        matrix_scan();
+        lcd_note_key_scan();
+    }
+}
+
 void init_display(void) {
     // Display timeout
     wait_ms(LCD_WAIT_TIME);
@@ -61,6 +106,11 @@ void init_display(void) {
     qp_set_viewport_offsets(lcd, LCD_OFFSET_X, LCD_OFFSET_Y);
 
     qp_lvgl_attach(lcd);
+    lv_disp_t *disp = lv_disp_get_default();
+    if (disp && disp->driver->flush_cb != lcd_flush_and_scan) {
+        lvgl_flush_orig         = disp->driver->flush_cb;
+        disp->driver->flush_cb = lcd_flush_and_scan;
+    }
 
     // Power on display, fill with black
     qp_power(lcd, 1);
@@ -102,6 +152,8 @@ void keyboard_post_init_lcd(void) {
 }
 
 void housekeeping_task_lcd(void) {
+    // housekeeping runs once per main loop, right after the regular matrix scan
+    lcd_note_key_scan();
     if (is_keyboard_left()) {
         if (lcd_modules[selected_module]->housekeeping_task != NULL) {
             lcd_modules[selected_module]->housekeeping_task();

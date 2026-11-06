@@ -10,6 +10,10 @@ lv_obj_t *ui_create_container(lv_obj_t *parent) {
     lv_obj_set_flex_flow(cont, LV_FLEX_FLOW_ROW_WRAP);
     ui_styles_t *styles = get_current_ui_styles();
     lv_obj_add_style(cont, &styles->flex_container, 0);
+    lv_obj_set_style_pad_left(cont, LCD_SAFE_PAD_LEFT, 0);
+    lv_obj_set_style_pad_right(cont, LCD_SAFE_PAD_RIGHT, 0);
+    lv_obj_set_style_pad_top(cont, LCD_SAFE_PAD_TOP, 0);
+    lv_obj_set_style_pad_bottom(cont, LCD_SAFE_PAD_BOTTOM, 0);
     return cont;
 }
 

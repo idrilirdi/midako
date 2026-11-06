@@ -121,3 +121,26 @@ Intended usage flow:
   4. Paste into theme.c in the QMK userspace repo
 
 The editor is a standalone local tool — no server, no build step, no dependencies.
+
+---
+
+BASE SCREEN LAYOUT (midako, 2026-11-06)
+---------------------------------------
+- Only the LEFT half has an LCD. It shows the whole layer: left half map on top,
+  right half map below (LAYER_MAP_ROWS 10 x LAYER_MAP_COLS 6, visual order, via
+  layer_remap in the keymap). Both views live on one LVGL screen, toggled with
+  LV_OBJ_FLAG_HIDDEN.
+- Header (all layers): layer name + S/C/A/G modifier pills.
+- Default (base) layer, whichever it is: bongo cat, current WPM, AVG/MAX/KEYS,
+  WPM bar. Other layers: key map as two lv_btnmatrix (cheap: one object per half).
+  Held keys are CHECKED (mod_btn_pressed style), KC_NO keys are outline only.
+- Key map labels use the built-in lv_font_montserrat_14: the custom fonts only have
+  letters, digits, space, ':' and '-', and montserrat_14 carries LV_SYMBOL_* glyphs.
+  Labels are at most 3 glyphs (about 32 px) so they fit a 35 px cell.
+- Bongo cat frames come from drashna/bongocats, converted by
+  tools/bongocat_to_lvgl.py to LV_IMG_CF_ALPHA_1BIT at 2x (192x64). The color is
+  img_recolor = value_labels text color, so it follows the theme. Each key press
+  slaps a paw (alternating), "ready" pose for 1.2 s after the last press, then idle loop.
+- WPM avg only samples seconds with recent key presses; pauses do not lower it.
+- LAYER_MENU is overridable (#undef + #define in the keymap config.h, since module
+  config is read first). midako uses layer 8, toggled by a combo.

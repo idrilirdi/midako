@@ -24,6 +24,10 @@ SRC += screens/screen_base.c
 SRC += screens/screen_pomodoro.c
 SRC += screens/menu.c
 SRC += screens/utilities.c
+SRC += screens/keycode_label.c
+SRC += screens/bongocat_img.c
+
+WPM_ENABLE = yes
 
 BACKLIGHT_ENABLE = yes
 BACKLIGHT_DRIVER = pwm

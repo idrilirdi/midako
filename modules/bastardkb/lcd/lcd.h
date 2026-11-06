@@ -33,6 +33,11 @@ void init_display(void);
 void write_config_to_eeprom(void);
 
 void set_current_module(const uint8_t module);
+
+// Longest gap (ms) between key scans on this half: since the last call / since boot.
+void     lcd_note_key_scan(void);
+uint32_t lcd_scan_gap_take_window(void);
+uint32_t lcd_scan_gap_peak(void);
 void module_sync_handler(uint8_t initiator2target_buffer_size, const void* initiator2target_buffer, uint8_t target2initiator_buffer_size, void* target2initiator_buffer);
 
 #endif

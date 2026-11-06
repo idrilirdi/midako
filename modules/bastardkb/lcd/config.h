@@ -27,6 +27,21 @@
 #define LCD_OFFSET_Y 15
 #define LCD_WIDTH 240  // Set according to your display specs
 #define LCD_HEIGHT 280 // Set according to your display specs
+// Inner padding of every screen. Measured on the keyboard: the case opening over the
+// screen hides the leftmost ~6-8 px and the right edge past x ~ 236, and has rounded
+// corners. Left/right are uneven so content (e.g. the WPM bar) looks centered.
+#ifndef LCD_SAFE_PAD_LEFT
+#    define LCD_SAFE_PAD_LEFT 14
+#endif
+#ifndef LCD_SAFE_PAD_RIGHT
+#    define LCD_SAFE_PAD_RIGHT 8
+#endif
+#ifndef LCD_SAFE_PAD_TOP
+#    define LCD_SAFE_PAD_TOP 16
+#endif
+#ifndef LCD_SAFE_PAD_BOTTOM
+#    define LCD_SAFE_PAD_BOTTOM 5
+#endif
 #define SPI_MODE 3     // Set according to your display specs
 #define ST7789         // Set according to your display specs GC_9A01 or ST7789
 #ifdef QUANTUM_PAINTER_SUPPORTS_NATIVE_COLORS
@@ -53,8 +68,14 @@
 
 // Custom display stuff
 #define BK_PALETTE LV_PALETTE_CYAN
-#define LAYER_MENU 4
+// Layer that opens the LCD menu. Module config is read before the keymap config.h, so
+// override it there with #undef LAYER_MENU + #define LAYER_MENU <n>.
+#ifndef LAYER_MENU
+#    define LAYER_MENU 4
+#endif
 
 #define SPLIT_TRANSPORT_MIRROR
 #define SPLIT_MODS_ENABLE
 #define SPLIT_POINTING_ENABLE
+// WPM is shown on the left half even when the right half is master.
+#define SPLIT_WPM_ENABLE
